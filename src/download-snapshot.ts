@@ -9,6 +9,7 @@ import { assert } from "console";
 async function download_snapshot(
   username: string,
   password: string,
+  otp: string,
   nationbuilder_url: string,
   outputDir: string
 ) {
@@ -21,9 +22,15 @@ async function download_snapshot(
   await page.getByLabel("Email").click();
   await page.getByLabel("Email").fill(username);
   await page.getByLabel("Email").press("Tab");
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   logger.info("Logging in.");
-  await page.getByRole("button", { name: "Login" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  if (otp) {
+    logger.info("Sending OTP code.");
+    await page.getByRole("button", { name: "Google Authenticator or similar" }).click();
+    await page.getByLabel("one-time code").fill(otp);
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+  }
   logger.info("Logged in, navigating to database snapshot page.");
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("link", { name: "Database" }).click();
@@ -92,6 +99,7 @@ async function download_snapshot(
 async function main(
   username: string,
   password: string,
+  otp: string,
   nationbuilder_url: string,
   outputDir: string
 ) {
@@ -100,7 +108,7 @@ async function main(
     transports: [new logger.transports.Console()],
   });
 
-  await download_snapshot(username, password, nationbuilder_url, outputDir);
+  await download_snapshot(username, password, otp, nationbuilder_url, outputDir);
 }
 
 const program = new Command();
@@ -110,6 +118,10 @@ program
   .requiredOption(
     "-p, --password_environment_var <password_environment_var>",
     "Name of environment variable to read password from"
+  )
+  .option(
+    "-t, --otp <otp>",
+    "TOTP one-time password"
   )
   .requiredOption(
     "-n, --nationbuilder_url <nationbuilder_url>",
@@ -128,6 +140,7 @@ program
     main(
       options.username,
       password,
+      options.otp,
       options.nationbuilder_url,
       options.output_dir
     );
