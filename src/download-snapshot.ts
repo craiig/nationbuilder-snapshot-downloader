@@ -22,7 +22,7 @@ async function download_snapshot(
   await page.getByLabel("Email").click();
   await page.getByLabel("Email").fill(username);
   await page.getByLabel("Email").press("Tab");
-  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole('textbox', {name: "Password"}).fill(password);
   logger.info("Logging in.");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   if (otp) {
